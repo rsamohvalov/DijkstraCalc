@@ -148,6 +148,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="DijkstraCalc.cpp" />
+    <ClCompile Include="list.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="list.h" />
