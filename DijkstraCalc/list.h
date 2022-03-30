@@ -1,5 +1,5 @@
 #ifndef __LIST_H_
-#define __LIST_H
+#define __LIST_H_
 
 typedef struct _node {
     void* data;
@@ -25,6 +25,6 @@ int list_add_to_begin(list* dest, void* element, bool deletable );
 int list_add_to_end( list* dest, void* element, bool deletable );
 void* list_remove(list* dest, node* what);
 node* list_find_by_ref( list* dest, void* data );
-node* list_find_with_comparer( list* dest, void* data, comparer_func comparer );
+
 
 #endif

@@ -7,10 +7,11 @@ node* node_new( void* data, bool deletable = false ) {
     if( !new_node ) {
         return NULL;
     }
-    new_node->data = element;
+    new_node->data = data;
     new_node->delete_on_free = deletable;
     new_node->prev = NULL;
     new_node->next = NULL;
+    return new_node;
 }
 
 list* list_new( void ) {
@@ -26,6 +27,7 @@ bool list_is_empty( list* dest ) {
     if( dest ) {
         return !dest->count;
     }
+    return true;
 }
 
 int list_add_to_begin( list* dest, void* element, bool deletable = false ) {
