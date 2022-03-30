@@ -105,6 +105,21 @@ int take_data_from_parse_buffer( char* parse_buffer, int* parse_buffer_index, st
     return 0;
 }
 
+int push_int_element( stack* count_stack, int number ) {
+    int ret = 0;
+    element* new_element = ( element* ) malloc( sizeof( element ) );
+    if( !new_element ) {
+        return -1;
+    }
+    new_element->d_type = arg;
+    new_element->data.number = number;
+    ret = stack_push( count_stack, new_element );
+    if( ret ) {
+        free( new_element );
+    }
+    return ret;
+}
+
 int count( stack* count_stack ) {
     int ret = 0;
     if( stack_count( count_stack ) == 1 ) {
@@ -121,31 +136,18 @@ int count( stack* count_stack ) {
                     second = (element*)stack_pop( count_stack );
                     ret = data->data.func( second->data.number, first->data.number );
                     free( second );
-
-                    element* new_element = ( element* ) malloc( sizeof( element ) );
-                    if( !new_element ) {
-                        printf( "Not enough memory to complete...\n" );
+                    if( push_int_element( count_stack, ret ) ) {
                         return -1;
                     }
-                    new_element->d_type = arg;
-                    new_element->data.number = ret;
-                    stack_push( count_stack, new_element );
-
-                    return 0;
                 }
                 else {
                     ret = count( count_stack );
                     second = ( element* ) stack_pop( count_stack );
                     ret = data->data.func( second->data.number, first->data.number );
                     free( second );
-                    element* new_element = ( element* ) malloc( sizeof( element ) );
-                    if( !new_element ) {
-                        printf( "Not enough memory to complete...\n" );
+                    if( push_int_element( count_stack, ret ) ) {
                         return -1;
                     }
-                    new_element->d_type = arg;
-                    new_element->data.number = ret;
-                    stack_push( count_stack, new_element );
                 }
                 free( first );
             }
@@ -157,30 +159,18 @@ int count( stack* count_stack ) {
                     second = ( element* ) stack_pop( count_stack );
                     ret = data->data.func( second->data.number, first->data.number );
                     free( second );
-
-                    element* new_element = ( element* ) malloc( sizeof( element ) );
-                    if( !new_element ) {
-                        printf( "Not enough memory to complete...\n" );
+                    if( push_int_element( count_stack, ret ) ) {
                         return -1;
                     }
-                    new_element->d_type = arg;
-                    new_element->data.number = ret;
-                    stack_push( count_stack, new_element );
-
                 }
                 else {
                     ret = count( count_stack );
                     second = ( element* ) stack_pop( count_stack );
                     ret = data->data.func( second->data.number, first->data.number );
                     free( second );
-                    element* new_element = ( element* ) malloc( sizeof( element ) );
-                    if( !new_element ) {
-                        printf( "Not enough memory to complete...\n" );
+                    if( push_int_element( count_stack, ret ) ) {
                         return -1;
-                    }
-                    new_element->d_type = arg;
-                    new_element->data.number = ret;
-                    stack_push( count_stack, new_element );
+                    }                    
                 }
                 free( first );
             }
