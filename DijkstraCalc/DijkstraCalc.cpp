@@ -85,7 +85,7 @@ int push_oper_element( stack* count_stack, char data ) {
     return stack_push( count_stack, new_element );
 }
 
-void pop_operations( char operation, char* priority, stack* my_stack, char* output_buffer, int* output_buffer_index, stack* count_stack ) {
+void pop_operations( char operation, char* priority, stack* my_stack, char* output_buffer, int* output_buffer_index, stack* count_stack, char to_out_buffer ) {
     char* data = (char*)stack_peek( my_stack );
     while( data ) {
         if( priority[(unsigned char)*data] >= priority[( unsigned char )operation] ) {
@@ -118,8 +118,10 @@ void pop_operations( char operation, char* priority, stack* my_stack, char* outp
             }            
             stack_push( count_stack, new_element );
 
-            output_buffer[*output_buffer_index] = *data;
-            (*output_buffer_index)++;
+            if( to_out_buffer ) {
+                output_buffer[*output_buffer_index] = *data;
+                (*output_buffer_index)++;
+            }
         }
         else {
             break;
@@ -237,9 +239,7 @@ int main()
     char output_buffer[4096] = {0};
     int  output_buffer_index = 0;
         
-    stack* my_stack = stack_new( );
-    stack* count_stack = stack_new();
-
+    
     char parse_buffer[256] = {0};
     int parse_buffer_index = 0;
 
@@ -252,43 +252,94 @@ int main()
     priority['/'] = 5;
     priority[':'] = 5;
 
-    printf( "Type your expression\n" );
-    gets_s( input_buffer, 4095 );
-    int input_size = strlen( input_buffer );
-    while( input_buffer_index < input_size ) {
-        if( input_buffer[input_buffer_index] == ' ' ) {
-            if( take_data_from_parse_buffer( parse_buffer, &parse_buffer_index, count_stack ) ) {
-                return -1;
+    char closing_bracket = 0;
+    char mul = '*';
+
+    while( 1 ) {
+
+        closing_bracket = 0;
+
+        stack* my_stack = stack_new( );
+        stack* count_stack = stack_new( );
+        memset( output_buffer, 0, output_buffer_index );
+        output_buffer_index = 0;
+        memset( parse_buffer, 0, parse_buffer_index );
+        parse_buffer_index = 0;
+        input_buffer_index = 0;
+
+        printf( "Type your expression, \"quit\" for exit\n" );
+        gets_s( input_buffer, 4095 );
+        if( !_strcmpi( input_buffer, "quit" ) ) {
+            break;
+        }
+        int input_size = strlen( input_buffer );
+        while( input_buffer_index < input_size ) {
+            if( input_buffer[input_buffer_index] == ' ' ) {
+                input_buffer_index++;
+                continue;
             }
-            input_buffer_index++;
-            continue;
-        }
-        if( input_buffer[input_buffer_index] >= 0x30 && input_buffer[input_buffer_index] <= 0x39 ) {
-            parse_buffer[parse_buffer_index] = input_buffer[input_buffer_index];
-            parse_buffer_index++;
-            output_buffer[output_buffer_index] = input_buffer[input_buffer_index];
-            input_buffer_index++;
-            output_buffer_index++;
-            continue;
-        }
-        switch( input_buffer[input_buffer_index] ) {
-            case '-': 
-            case '+':
+            if( input_buffer[input_buffer_index] >= 0x30 && input_buffer[input_buffer_index] <= 0x39 ) {
+                parse_buffer[parse_buffer_index] = input_buffer[input_buffer_index];
+                parse_buffer_index++;
+                output_buffer[output_buffer_index] = input_buffer[input_buffer_index];
+                input_buffer_index++;
+                output_buffer_index++;
+
+                closing_bracket = 0;
+
+                continue;
+            }
+            switch( input_buffer[input_buffer_index] ) {
+            case '-': {
+                if( !parse_buffer_index && !closing_bracket ) {
+                    input_buffer_index++;
+                    
+                    strcpy_s( parse_buffer, 255, "-1" );
+                    parse_buffer_index = 1;
+                    take_data_from_parse_buffer( parse_buffer, &parse_buffer_index, count_stack );
+                  
+                    strcpy_s( output_buffer + output_buffer_index, 4096, "(-1)" );
+                    output_buffer_index += strlen( "(-1)" );                    
+                    stack_push( my_stack, &(mul) );                    
+                    continue;
+                }
+                else {
+                    if( take_data_from_parse_buffer( parse_buffer, &parse_buffer_index, count_stack ) ) {
+                        return -1;
+                    }
+                    pop_operations( input_buffer[input_buffer_index], priority, my_stack, output_buffer, &output_buffer_index, count_stack, 1 );
+                    stack_push( my_stack, &(input_buffer[input_buffer_index]) );
+                    closing_bracket = 0;
+                    break;
+                }
+            }
+            case '+': {
+                if( !parse_buffer_index && !closing_bracket ) {
+                    input_buffer_index++;
+                    continue;
+                }
+            }
             case '*':
             case ':':
             case '/': {
                 if( take_data_from_parse_buffer( parse_buffer, &parse_buffer_index, count_stack ) ) {
                     return -1;
                 }
-                pop_operations( input_buffer[input_buffer_index], priority, my_stack, output_buffer, &output_buffer_index, count_stack );
+                pop_operations( input_buffer[input_buffer_index], priority, my_stack, output_buffer, &output_buffer_index, count_stack, 1 );
                 stack_push( my_stack, &(input_buffer[input_buffer_index]) );
+                closing_bracket = 0;
                 break;
-            }   
+            }
             case '(': {
+                if( take_data_from_parse_buffer( parse_buffer, &parse_buffer_index, count_stack ) ) {
+                    return -1;
+                }
                 stack_push( my_stack, &(input_buffer[input_buffer_index]) );
+                closing_bracket = 0;
                 break;
             }
             case ')': {
+                closing_bracket = 1;
                 if( take_data_from_parse_buffer( parse_buffer, &parse_buffer_index, count_stack ) ) {
                     return -1;
                 }
@@ -305,49 +356,49 @@ int main()
                 break;
             }
             default: {
-                printf( "error in writing, symbol %c\n", input_buffer[input_buffer_index] );
+                printf( "Error in expression, symbol %c not suitable. Press any key...\n", input_buffer[input_buffer_index] );
+                fgetc(stdin );
                 return -1;
             }
-        }
-        input_buffer_index++;
-    }
-
-    if( take_data_from_parse_buffer( parse_buffer, &parse_buffer_index, count_stack ) ) {
-        printf( "error\n" );
-        return -1;
-    }
-
-    if( stack_count( my_stack ) ) {
-        char* data = ( char* ) stack_pop( my_stack );
-        while( data ) {
-            if( *data == '(' ) {
-                printf( "error in symbol %c\n", input_buffer[input_buffer_index] );
-                return -1;
             }
-            push_oper_element( count_stack, *data );
-            output_buffer[output_buffer_index] = *data;
-            output_buffer_index++;
-            data = ( char* ) stack_pop( my_stack );
+            input_buffer_index++;
         }
-    }
 
-    stack_delete( my_stack );
-
-    printf( "\nReverse polish notaion: %s", output_buffer );
-
-    if( count( count_stack ) ) {
-        printf( "Error during counting expression result!\n" );
-    }
-    else {
-        if( stack_count( count_stack ) == 1 ) {
-            element* result = (element*)stack_pop(count_stack );
-            printf( " = %d", result->data.number );
-            free( result );
+        if( take_data_from_parse_buffer( parse_buffer, &parse_buffer_index, count_stack ) ) {
+            printf( "error\n" );
+            return -1;
         }
+
+        if( stack_count( my_stack ) ) {
+            char* data = ( char* ) stack_pop( my_stack );
+            while( data ) {
+                if( *data == '(' ) {
+                    printf( "error in symbol %c\n", input_buffer[input_buffer_index] );
+                    return -1;
+                }
+                push_oper_element( count_stack, *data );
+                output_buffer[output_buffer_index] = *data;
+                output_buffer_index++;
+                data = ( char* ) stack_pop( my_stack );
+            }
+        }
+
+        stack_delete( my_stack );
+        output_buffer[output_buffer_index] = 0;
+        printf( "Reverse polish notaion: %s", output_buffer );
+
+        if( count( count_stack ) ) {
+            printf( "Error!\n" );
+        }
+        else {
+            if( stack_count( count_stack ) == 1 ) {
+                element* result = ( element* ) stack_pop( count_stack );
+                printf( " = %d\n\n", result->data.number );
+                free( result );
+            }
+        }
+
+        stack_delete( count_stack );
     }
-
-    stack_delete( count_stack );
-
-    getchar( );
     return 0;
 }
