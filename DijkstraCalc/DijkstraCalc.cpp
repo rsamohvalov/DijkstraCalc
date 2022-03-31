@@ -88,7 +88,7 @@ int push_oper_element( stack* count_stack, char data ) {
 void pop_operations( char operation, char* priority, stack* my_stack, char* output_buffer, int* output_buffer_index, stack* count_stack ) {
     char* data = (char*)stack_peek( my_stack );
     while( data ) {
-        if( priority[*data] >= priority[operation] ) {
+        if( priority[(unsigned char)*data] >= priority[( unsigned char )operation] ) {
             data = ( char* ) stack_pop( my_stack );
 
             element* new_element = ( element* ) malloc( sizeof( element ) );
@@ -171,9 +171,6 @@ int count( stack* count_stack ) {
                     }
                     ret = data->data.func( second->data.number, first->data.number );
                     free( second );
-                    /*if( push_int_element( count_stack, ret ) ) {
-                        return -1;
-                    }*/
                 }
                 else {
                     ret = count( count_stack );
@@ -186,9 +183,6 @@ int count( stack* count_stack ) {
                     }
                     ret = data->data.func( second->data.number, first->data.number );
                     free( second );
-                    /*if( push_int_element( count_stack, ret ) ) {
-                        return -1;
-                    }*/
                 }
                 free( first );
             }
@@ -209,9 +203,6 @@ int count( stack* count_stack ) {
                     }
                     ret = data->data.func( second->data.number, first->data.number );
                     free( second );
-                    /*if( push_int_element( count_stack, ret ) ) {
-                        return -1;
-                    }*/
                 }
                 else {
                     ret = count( count_stack );
@@ -223,10 +214,7 @@ int count( stack* count_stack ) {
                         return -1;
                     }
                     ret = data->data.func( second->data.number, first->data.number );
-                    free( second );
-                    /*if( push_int_element( count_stack, ret ) ) {
-                        return -1;
-                    }*/                    
+                    free( second );                            
                 }
                 free( first );
             }
