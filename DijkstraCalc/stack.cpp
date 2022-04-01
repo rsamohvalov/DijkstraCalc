@@ -15,7 +15,7 @@ stack* stack_new( ) {
     return ret;
 }
 
-int stack_push( stack* dest, void* data, bool deletable ) {
+int stack_push( stack* dest, void* data, unsigned char deletable ) {
     if( !dest ) {
         return -1;
     }

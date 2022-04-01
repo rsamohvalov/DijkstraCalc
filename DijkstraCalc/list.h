@@ -3,7 +3,7 @@
 
 typedef struct _node {
     void* data;
-    bool delete_on_free;
+    unsigned char delete_on_free;
     struct _node* prev;
     struct _node* next;
 } node;
@@ -14,15 +14,15 @@ typedef struct {
     unsigned int count;
 } list;
 
-typedef bool (*comparer_func)(void*, void*);
+typedef unsigned char (*comparer_func)(void*, void*);
 
 
-node* node_new( void* data, bool deletable );
+node* node_new( void* data, unsigned char deletable );
 list* list_new(void);
 void list_delete( list* dest );
-bool list_is_empty(list* dest);
-int list_add_to_begin(list* dest, void* element, bool deletable );
-int list_add_to_end( list* dest, void* element, bool deletable );
+unsigned char list_is_empty(list* dest);
+int list_add_to_begin(list* dest, void* element, unsigned char deletable );
+int list_add_to_end( list* dest, void* element, unsigned char deletable );
 void* list_remove(list* dest, node* what);
 node* list_find_by_ref( list* dest, void* data );
 

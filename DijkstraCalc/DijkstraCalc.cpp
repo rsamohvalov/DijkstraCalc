@@ -1,24 +1,27 @@
 ﻿
-#include <iostream>
+//#include <iostream>
+#include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "list.h"
 #include "stack.h"
 
-typedef int (*operation)( int first, int second );
+//typedef int (*operation)( int first, int second );
+typedef float (*operation)(float first, float second);
 
-int my_add( int first, int second ) {
+float my_add( float first, float second ) {
     return first + second;
 }
 
-int my_sub( int first, int second) {
+float my_sub( float first, float second) {
     return first - second;
 }
 
-int my_div( int first, int second ) {
+float my_div( float first, float second ) {
     return first/second;
 }
 
-int my_mul( int first, int second ) {
+float my_mul( float first, float second ) {
     return first * second;
 }
 
@@ -31,12 +34,12 @@ typedef enum {
 typedef struct  {
     data_type d_type;
     union {
-        int number;
+        float number;
         operation func;
     } data;
 } element;
 
-int push_int_element( stack* count_stack, int number ) {
+int push_arg_element( stack* count_stack, float number ) {
     int ret = 0;
     element* new_element = ( element* ) malloc( sizeof( element ) );
     if( !new_element ) {
@@ -138,7 +141,11 @@ int take_data_from_parse_buffer( char* parse_buffer, int* parse_buffer_index, st
             return -1;
         }
         new_element->d_type = arg;
-        new_element->data.number = atoi( parse_buffer );
+        new_element->data.number = (float)atof( parse_buffer );
+        if( !new_element->data.number ) {
+            free( new_element );
+            return -1;
+        }
         stack_push( count_stack, new_element );
     }
     memset( parse_buffer, 0, *parse_buffer_index + 1 );
@@ -150,6 +157,7 @@ int take_data_from_parse_buffer( char* parse_buffer, int* parse_buffer_index, st
 
 int count( stack* count_stack ) {
     int ret = 0;
+    float result = 0;
     if( stack_count( count_stack ) == 1 ) {
         return 0;
     }
@@ -171,7 +179,7 @@ int count( stack* count_stack ) {
                     if( !second ) {
                         return -1;
                     }
-                    ret = data->data.func( second->data.number, first->data.number );
+                    result = data->data.func( second->data.number, first->data.number );
                     free( second );
                 }
                 else {
@@ -183,7 +191,7 @@ int count( stack* count_stack ) {
                     if( !second ) {
                         return -1;
                     }
-                    ret = data->data.func( second->data.number, first->data.number );
+                    result = data->data.func( second->data.number, first->data.number );
                     free( second );
                 }
                 free( first );
@@ -203,7 +211,7 @@ int count( stack* count_stack ) {
                     if( !second ) {
                         return -1;
                     }
-                    ret = data->data.func( second->data.number, first->data.number );
+                    result = data->data.func( second->data.number, first->data.number );
                     free( second );
                 }
                 else {
@@ -215,13 +223,12 @@ int count( stack* count_stack ) {
                     if( !second ) {
                         return -1;
                     }
-                    ret = data->data.func( second->data.number, first->data.number );
+                    result = data->data.func( second->data.number, first->data.number );
                     free( second );                            
                 }
                 free( first );
             }
-
-            if( push_int_element( count_stack, ret ) ) {
+            if( push_arg_element( count_stack, result ) ) {
                 return -1;
             }
 
@@ -268,17 +275,25 @@ int main()
         input_buffer_index = 0;
 
         printf( "Type your expression, \"quit\" for exit\n" );
-        gets_s( input_buffer, 4095 );
-        if( !_strcmpi( input_buffer, "quit" ) ) {
+        fgets( input_buffer, 4095, stdin );
+#if defined(WIN32)
+        if( !_strnicmp( input_buffer, "quit", 4095 ) ) {
+#else
+        if( !strncasecmp( input_buffer, "quit", 4095 ) ) {
+#endif
             break;
         }
+
         int input_size = strlen( input_buffer );
         while( input_buffer_index < input_size ) {
             if( input_buffer[input_buffer_index] == ' ' ) {
                 input_buffer_index++;
                 continue;
             }
-            if( input_buffer[input_buffer_index] >= 0x30 && input_buffer[input_buffer_index] <= 0x39 ) {
+            if( input_buffer[input_buffer_index] == 0x0A || input_buffer[input_buffer_index] == 0x0D ) {
+                break;
+            }
+            if( (input_buffer[input_buffer_index] >= 0x30 && input_buffer[input_buffer_index] <= 0x39) || input_buffer[input_buffer_index] == ',' || input_buffer[input_buffer_index] == '.' ) {
                 parse_buffer[parse_buffer_index] = input_buffer[input_buffer_index];
                 parse_buffer_index++;
                 output_buffer[output_buffer_index] = input_buffer[input_buffer_index];
@@ -294,17 +309,33 @@ int main()
                 if( !parse_buffer_index && !closing_bracket ) {
                     input_buffer_index++;
                     
+#if defined(WIN32)                    
                     strcpy_s( parse_buffer, 255, "-1" );
+#else
+                    strcpy( parse_buffer, "-1" );
+#endif
+
                     parse_buffer_index = 1;
-                    take_data_from_parse_buffer( parse_buffer, &parse_buffer_index, count_stack );
+                    if( take_data_from_parse_buffer( parse_buffer, &parse_buffer_index, count_stack ) ) {
+                        printf( "parsing error in %s. Exiting. Press enter...\n", parse_buffer );
+                        fgetc( stdin );
+                        return -1;
+                    }
                   
+#if defined(WIN32)                  
                     strcpy_s( output_buffer + output_buffer_index, 4096, "(-1)" );
+#else
+                    strcpy( output_buffer + output_buffer_index, "(-1)" );
+#endif
+
                     output_buffer_index += strlen( "(-1)" );                    
                     stack_push( my_stack, &(mul) );                    
                     continue;
                 }
                 else {
                     if( take_data_from_parse_buffer( parse_buffer, &parse_buffer_index, count_stack ) ) {
+                        printf( "parsing error in %s. Exiting. Press enter...\n", parse_buffer );
+                        fgetc( stdin );
                         return -1;
                     }
                     pop_operations( input_buffer[input_buffer_index], priority, my_stack, output_buffer, &output_buffer_index, count_stack, 1 );
@@ -323,6 +354,8 @@ int main()
             case ':':
             case '/': {
                 if( take_data_from_parse_buffer( parse_buffer, &parse_buffer_index, count_stack ) ) {
+                    printf( "parsing error in %s. Exiting. Press enter...\n", parse_buffer );
+                    fgetc( stdin );
                     return -1;
                 }
                 pop_operations( input_buffer[input_buffer_index], priority, my_stack, output_buffer, &output_buffer_index, count_stack, 1 );
@@ -332,6 +365,8 @@ int main()
             }
             case '(': {
                 if( take_data_from_parse_buffer( parse_buffer, &parse_buffer_index, count_stack ) ) {
+                    printf( "parsing error in %s. Exiting. Press enter...\n", parse_buffer );
+                    fgetc( stdin );
                     return -1;
                 }
                 stack_push( my_stack, &(input_buffer[input_buffer_index]) );
@@ -341,6 +376,8 @@ int main()
             case ')': {
                 closing_bracket = 1;
                 if( take_data_from_parse_buffer( parse_buffer, &parse_buffer_index, count_stack ) ) {
+                    printf( "parsing error in %s. Exiting. Press enter...\n", parse_buffer );
+                    fgetc( stdin );
                     return -1;
                 }
                 char* data = ( char* ) stack_pop( my_stack );
@@ -356,7 +393,7 @@ int main()
                 break;
             }
             default: {
-                printf( "Error in expression, symbol %c not suitable. Press any key...\n", input_buffer[input_buffer_index] );
+                printf( "Error in expression, symbol %c not suitable. Press enter...\n", input_buffer[input_buffer_index] );
                 fgetc(stdin );
                 return -1;
             }
@@ -365,7 +402,8 @@ int main()
         }
 
         if( take_data_from_parse_buffer( parse_buffer, &parse_buffer_index, count_stack ) ) {
-            printf( "error\n" );
+            printf( "parsing error in %s. Exiting. Press enter...\n", parse_buffer );
+            fgetc( stdin );
             return -1;
         }
 
@@ -393,7 +431,7 @@ int main()
         else {
             if( stack_count( count_stack ) == 1 ) {
                 element* result = ( element* ) stack_pop( count_stack );
-                printf( " = %d\n\n", result->data.number );
+                printf( " = %.2f\n\n", result->data.number );
                 free( result );
             }
         }

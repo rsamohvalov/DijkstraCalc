@@ -8,7 +8,7 @@ typedef struct {
 } stack;
 
 stack* stack_new();
-int stack_push(stack* dest, void* data, bool deletable = false );
+int stack_push(stack* dest, void* data, unsigned char deletable = 1 );
 void* stack_pop( stack* dest );
 void* stack_peek( stack* dest );
 unsigned int stack_count( stack* dest );

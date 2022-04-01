@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <malloc.h>
 
-node* node_new( void* data, bool deletable = false ) {
+node* node_new( void* data, unsigned char deletable = 1 ) {
     node* new_node = (node*)malloc( sizeof( node ) );
     if( !new_node ) {
         return NULL;
@@ -23,14 +23,14 @@ list* list_new( void ) {
     return ret;
  }
 
-bool list_is_empty( list* dest ) {
+unsigned char list_is_empty( list* dest ) {
     if( dest ) {
         return !dest->count;
     }
-    return true;
+    return 1;
 }
 
-int list_add_to_begin( list* dest, void* element, bool deletable = false ) {
+int list_add_to_begin( list* dest, void* element, unsigned char deletable = 1 ) {
     if( !dest || !element) {
         return -1;
     }
@@ -51,7 +51,7 @@ int list_add_to_begin( list* dest, void* element, bool deletable = false ) {
     return 0;
 }
 
-int list_add_to_end( list* dest, void* element, bool deletable = false ) {
+int list_add_to_end( list* dest, void* element, unsigned char deletable = 1 ) {
     if( !dest || !element ) {
         return -1;
     }
